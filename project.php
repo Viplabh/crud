@@ -78,13 +78,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                         <input type="hidden" name="snoEdit" id="snoEdit">
                         <div class="form-group">
                             <label for="titleEdit">Note Title</label>
-                            <input type="text" class="form-control" id="titleEdit" name="titleEdit"
+                            <input type="text" class="form-control" id="titleEdit1" name="titleEdit"
                                 aria-describedby="emailHelp">
                         </div>
 
                         <div class="form-group">
                             <label for="descriptionEdit">Note Description</label>
-                            <textarea class="form-control" id="descriptionEdit" name="descriptionEdit"
+                            <textarea class="form-control" id="descriptionEdit1" name="descriptionEdit"
                                 rows="3"></textarea>
                         </div>
                     </div>
@@ -207,9 +207,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             title = tr.getElementsByTagName("td")[0].innerText;
             description = tr.getElementsByTagName("td")[1].innerText;
             console.log(title, description);
-            titleEdit.value = title;
-            descriptionEdit.value = description;
+            titleEdit1.value = title;
+            descriptionEdit1.value = description;
             snoEdit.value = e.target.id;
+            
             console.log(e.target.id)
             $('#editModal').modal('toggle');
         })
