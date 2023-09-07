@@ -12,14 +12,26 @@ if (isset($_GET['delete'])) {
     $sql = "DELETE FROM `user` WHERE `sno` = $sno";
     $result = mysqli_query($conn, $sql);
 }
-if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    if (isset($_POST['snoEdit'])) {
 
+$imageUploadPath = ''; // Initialize the variable
+
+if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+    // Check for image upload
+    $imageFileName = $_FILES['image']['name'];
+    $imageTmpName = $_FILES['image']['tmp_name'];
+    $imageUploadPath = 'images/' . $imageFileName;
+
+    if (move_uploaded_file($imageTmpName, $imageUploadPath)) {
+        echo "Image uploaded successfully!";
+    } else {
+        echo "Image upload failed.";
+    }
+
+    if (isset($_POST['snoEdit'])) {
         $sno = $_POST["snoEdit"];
         $title = $_POST["titleEdit"];
         $description = $_POST["descriptionEdit"];
 
-        // Sql query to be executed
         $sql = "UPDATE `user` SET `title` = '$title' , `description` = '$description' WHERE `user`.`sno` = $sno";
         $result = mysqli_query($conn, $sql);
         if ($result) {
@@ -78,13 +90,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                         <input type="hidden" name="snoEdit" id="snoEdit">
                         <div class="form-group">
                             <label for="titleEdit">Note Title</label>
-                            <input type="text" class="form-control" id="titleEdit1" name="titleEdit"
+                            <input type="text" class="form-control" id="titleEdit" name="titleEdit"
                                 aria-describedby="emailHelp">
                         </div>
 
                         <div class="form-group">
                             <label for="descriptionEdit">Note Description</label>
-                            <textarea class="form-control" id="descriptionEdit1" name="descriptionEdit"
+                            <textarea class="form-control" id="descriptionEdit" name="descriptionEdit"
                                 rows="3"></textarea>
                         </div>
                     </div>
@@ -131,48 +143,68 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     }
     ?>
     <div class="container my-4">
-        <h2>Add a Note to Notes</h2>
-        <form action="/cogent/crud/project.php" method="POST">
-            <div class="form-group">
-                <label for="title">Note Title</label>
-                <input type="text" class="form-control" id="titleEdit" name="titleEdit" aria-describedby="emailHelp">
-            </div>
+    <h2>Add a Note to Notes</h2>
+    <form action="/cogent/crud/project.php" method="POST" enctype="multipart/form-data"> <!-- Added enctype for file upload -->
+        <div class="form-group">
+            <label for="title">Note Title</label>
+            <input type="text" class="form-control" id="titleEdit" name="titleEdit" aria-describedby="emailHelp">
+        </div>
 
-            <div class="form-group">
-                <label for="description">Note Description</label>
-                <textarea class="form-control" id="descriptionEdit" name="descriptionEdit" rows="3"></textarea>
-            </div>
-            <button type="submit" class="btn btn-primary">Add Note</button>
-        </form>
-    </div>
+        <div class="form-group">
+            <label for="description">Note Description</label>
+            <textarea class="form-control" id="descriptionEdit" name="descriptionEdit" rows="2"></textarea>
+        </div>
+        <div class="form-group">
+            <label for="image">Upload Image</label>
+            <input type="file" class="form-control-file" id="image" name="image">
+        </div>
 
-    <div class="container my-4">
+        <button type="submit" class="btn btn-primary">Add Note</button>
+    </form>
+</div>
 
-
-        <table class="table" id="myTable">
-            <thead>
-                <tr>
-                    <th scope="col">S.No</th>
-                    <th scope="col">Title</th>
-                    <th scope="col">Description</th>
-                    <th scope="col">Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php
-                $sql = "SELECT * FROM `user`";
-                $result = mysqli_query($conn, $sql);
-                $sno = 0;
-                while ($row = mysqli_fetch_assoc($result)) {
-                    $sno = $sno + 1;
-                    echo "<tr>
-            <th scope='row'>" . $sno . "</th>
-            <td>" . $row['title'] . "</td>
-            <td>" . $row['description'] . "</td>
-            <td> <button class='edit btn btn-sm btn-primary' id=" . $row['sno'] . ">Edit</button>
-            <button class='delete btn btn-sm btn-primary' id=d" . $row['sno'] . ">Delete</button>  </td>
-          </tr>";
+<div class="container my-4">
+    <table class="table" id="myTable">
+        <thead>
+            <tr>
+                <th scope="col">S.No</th>
+                <th scope="col">Title</th>
+                <th scope="col">Description</th>
+                <th scope="col">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            <?php
+            $sql = "SELECT * FROM `user`";
+            $result = mysqli_query($conn, $sql);
+            $sno = 0;
+            while ($row = mysqli_fetch_assoc($result)) {
+                $sno = $sno + 1;
+                echo "<tr>
+                    <th scope='row'>" . $sno . "</th>
+                    <td>" . $row['title'] . "</td>
+                    <td>" . $row['description'] . "</td>";
+                
+                if (!empty($row['image'])) {
+                    $imagePath = 'images/' . $row['image'];
+                    echo "<td>
+                        <img src='" . $imagePath . "' alt='Image'>
+                        <button class='edit btn btn-sm btn-primary' id='" . $row['sno'] . "'>Edit</button>
+                        <button class='delete btn btn-sm btn-primary' id='d" . $row['sno'] . "'>Delete</button>
+                    </td>";
+                } else {
+                    echo "<td>
+                        <button class='edit btn btn-sm btn-primary' id='" . $row['sno'] . "'>Edit</button>
+                        <button class='delete btn btn-sm btn-primary' id='d" . $row['sno'] . "'>Delete</button>
+                    </td>";
                 }
+
+                echo "</tr>";
+            }
+            ?>
+        </tbody>
+    </table>
+</div>
                 ?>
 
 
@@ -180,8 +212,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         </table>
     </div>
     <hr>
-    <!-- Optional JavaScript -->
-    <!-- jQuery first, then Popper.js, then Bootstrap JS -->
+    <td>
+        <img src="<?php echo $imageUploadPath; ?>" alt="Image">
+        <button class='edit btn btn-sm btn-primary' id="<?php echo $row['sno']; ?>">Edit</button>
+        <button class='delete btn btn-sm btn-primary' id="d<?php echo $row['sno']; ?>">Delete</button>
+    </td>
+
     <script src="https://code.jquery.com/jquery-3.4.1.slim.min.js"
         integrity="sha384-J6qa4849blE2+poT4WnyKhv5vZF5SrPo0iEjwBvKU7imGFAV0wwj1yYfoRSJoZ+n" crossorigin="anonymous">
     </script>
@@ -207,10 +243,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             title = tr.getElementsByTagName("td")[0].innerText;
             description = tr.getElementsByTagName("td")[1].innerText;
             console.log(title, description);
-            titleEdit1.value = title;
-            descriptionEdit1.value = description;
+            titleEdit.value = title;
+            descriptionEdit.value = description;
             snoEdit.value = e.target.id;
-            
             console.log(e.target.id)
             $('#editModal').modal('toggle');
         })
