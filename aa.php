@@ -2,6 +2,7 @@
 $insert = false;
 $update = false;
 $delete = false;
+$editData = array();
 
 require 'db.php';
 
@@ -19,7 +20,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } elseif (isset($_POST['edit'])) {
         $sno = $_POST['snoEdit'];
         $title = $_POST['titleEdit'];
-        $description = $_POST['descriptionEdit'];
+        $description= $_POST['descriptionEdit'];
 
         $sql = "UPDATE `user` SET `title` = '$title', `description` = '$description' WHERE `sno` = $sno";
         $result = mysqli_query($conn, $sql);
@@ -55,6 +56,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['delete']) && !isset(
         echo "Image upload failed.";
     }
 }
+
+if (isset($_POST['edit'])) {
+    $sno = $_POST['snoEdit'];
+    $sql = "SELECT * FROM `user` WHERE `sno` = $sno";
+    $result = mysqli_query($conn, $sql);
+    $editData = mysqli_fetch_assoc($result);
+}
 ?>
 
 <!doctype html>
@@ -87,41 +95,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['delete']) && !isset(
 </head>
 
 <body>
-    <div class="modal fade" id="deleteModal" tabindex="-1" role="dialog" aria-labelledby="deleteModalLabel"
-        aria-hidden="true">
-        <div class="modal-dialog" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="deleteModalLabel">Delete Note</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                <form id="deleteForm" method="POST">
-                    <div class="modal-body">
-                        <input type="hidden" name="delete">
-                        <p>Are you sure you want to delete this note?</p>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn btn-danger">Delete</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-
+    <?php
+    if ($delete) {
+        echo '<div class="alert alert-success alert-dismissible fade show" role="alert">
+                Data deleted successfully!
+                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+              </div>';
+    }
+    ?>
     <div class="container my-4">
         <h2>Add a Note to Notes</h2>
         <form action="/cogent/crud/project.php" method="POST" enctype="multipart/form-data">
+
+            <input type="hidden" name="snoEdit" value="<?php echo isset($editData['sno']) ? $editData['sno'] : ''; ?>">
             <div class="form-group">
                 <label for="titleEdit">Note Title</label>
-                <input type="text" class="form-control" id="titleEdit" name="titleEdit" aria-describedby="emailHelp">
+                <input type="text" class="form-control" id="titleEdit" name="titleEdit" aria-describedby="emailHelp"
+                    value="<?php echo isset($editData['title']) ? $editData['title'] : ''; ?>">
             </div>
 
             <div class="form-group">
                 <label for="descriptionEdit">Note Description</label>
-                <textarea class="form-control" id="descriptionEdit" name="descriptionEdit" rows="2"></textarea>
+                <textarea class="form-control" id="descriptionEdit" name="descriptionEdit" rows="2"><?php echo isset($editData['description']) ? $editData['description'] : ''; ?></textarea>
             </div>
 
             <div class="form-group">
@@ -132,12 +129,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['delete']) && !isset(
             <div class="form-group">
                 <label for="uploadedImage">Uploaded Image</label>
                 <div class="uploaded-image-container">
-                    <img id="preview" src="" alt="Uploaded Image">
+                    <img id="preview" src="<?php echo isset($editData['image']) ? 'images/' . $editData['image'] : ''; ?>" alt="Uploaded Image">
                 </div>
             </div>
 
-            <button type="submit" class="btn btn-primary">Add Note</button>
-
+            <button type="submit" class="btn btn-primary"><?php echo isset($editData['sno']) ? 'Edit Note' : 'Add Note'; ?></button>
         </form>
     </div>
 
@@ -173,42 +169,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['delete']) && !isset(
 
                     echo "</td>
                     <td>
-                        <button class='edit-btn btn btn-sm btn-primary' data-toggle='modal' data-target='#editModal" . $row['sno'] . "' data-sno='" . $row['sno'] . "' data-title='" . $row['title'] . "' data-description='" . $row['description'] . "'>Edit</button>
-                        <button class='delete btn btn-sm btn-primary' id='d" . $row['sno'] . "' data-sno='" . $row['sno'] . "'>Delete</button>
+                        <form method='POST' action=''>
+                            <input type='hidden' name='snoeDelete' value='" . $row['sno'] . "'>
+                            <button type='submit' class='btn btn-danger'>Delete</button>
+                        </form>
+                        <form method='POST' action=''>
+                            <input type='hidden' name='snoEdit' value='" . $row['sno'] . "'>
+                            <button type='submit' class='btn btn-primary'>Edit</button>
+                        </form>
                     </td>
                 </tr>";
-
-                    echo "
-                    
-                    <div class='modal fade' id='editModal" . $row['sno'] . "' tabindex='-1' role='dialog' aria-labelledby='editModalLabel' aria-hidden='true'>
-                        <div class='modal-dialog' role='document'>
-                            <div class='modal-content'>
-                                <div class='modal-header'>
-                                    <h5 class='modal-title' id='editModalLabel'>Edit Note</h5>
-                                    <button type='button' class='close' data-dismiss='modal' aria-label='Close'>
-                                        <span aria-hidden='true'>&times;</span>
-                                    </button>
-                                </div>
-                                <form id='editForm' action='/cogent/crud/project.php' method='POST'>
-                                    <div class='modal-body'>
-                                        <input type='hidden' name='snoEdit' value='" . $row['sno'] . "'>
-                                        <div class='form-group'>
-                                            <label for='titleEdit" . $row['sno'] . "'>Note Title</label>
-                                            <input type='text' class='form-control' id='titleEdit" . $row['sno'] . "' name='titleEdit' value='" . $row['title'] . "'>
-                                        </div>
-                                        <div class='form-group'>
-                                            <label for='descriptionEdit" . $row['sno'] . "'>Note Description</label>
-                                            <textarea class='form-control' id='descriptionEdit" . $row['sno'] . "' name='descriptionEdit' rows='3'>" . $row['description'] . "</textarea>
-                                        </div>
-                                    </div>
-                                    <div class='modal-footer'>
-                                        <button type='button' class='btn btn-secondary' data-dismiss='modal'>Close</button>
-                                        <button type='submit' name='edit' class='btn btn-primary'>Save Changes</button>
-                                    </div>
-                                </form>
-                            </div>
-                        </div>
-                    </div>";
                 }
                 ?>
             </tbody>
@@ -225,24 +195,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['delete']) && !isset(
             reader.readAsDataURL(input.files[0]);
         }
     }
-
-    $(document).ready(function() {
-        $('.edit-btn').click(function() {
-            var sno = $(this).data('sno');
-            var title = $(this).data('title');
-            var description = $(this).data('description');
-            $('#editForm').attr('action', '/cogent/crud/project.php');
-            $('#snoEdit').val(sno);
-            $('#titleEdit').val(title);
-            $('#descriptionEdit').val(description);
-        });
-
-        $('.delete').click(function() {
-            var sno = $(this).data('sno');
-            $('#deleteForm').attr('action', '/cogent/crud/project.php');
-            $('input[name=delete]').val(sno);
-        });
-    });
     </script>
 </body>
 
